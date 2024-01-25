@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config({ path: './.env' });
 const crypto = require('crypto');
 const app = express();
 const nodemailer = require('nodemailer'); // Import Nodemailer
@@ -16,7 +17,7 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-app.listen(5000); 
+app.listen(process.env.PORT); 
 
 const updatedStatus = {};
 
@@ -154,11 +155,11 @@ app.post('/Order', async (req, resp) => {
       success: false,
       error: 'Error creating order',
     });
-  }
+  } 
 });
 
 app.get('/key', (req, resp) => {
-  resp.json({ key: 'rzp_test_OmCfFJhnp3Fztn' });
+  resp.json({ key: process.env.RAZOR_AP1_KEY });
 });
 
 app.post('/saveDataToDatabase', async (req, resp) => {

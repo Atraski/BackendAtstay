@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
-const db = "mongodb+srv://atstay:scsc9654%4021@cluster0.wp3ie99.mongodb.net/atstay?retryWrites=true&w=majority"
+// require('dotenv').config({ path: './.env' });
+const db = process.env.MONGODB_URI
 module.exports=mongoose.connect(db,{
     useNewUrlParser: true,
     useUnifiedTopology: true,
