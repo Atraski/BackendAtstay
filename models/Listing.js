@@ -1,0 +1,117 @@
+const mongoose = require("mongoose");
+
+const ListingSchema = new mongoose.Schema(
+  {
+    // store host email
+    hostId: {
+      type: String,
+      required: true,
+    },
+    // providing custom unique hotel id
+    hotelId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    // which category does it falls in like hilly, beach etc.
+    category: {
+      type: String,
+      required: true,
+      Default: "rooms",
+    },
+    // what it provides rooms, entire space, shared room. Currently moving with rooms
+    type: {
+      type: String,
+      required: true,
+    },
+    // provides complete address
+    streetAddress: {
+      type: String,
+      required: true,
+    },
+    // aptSuite: {
+    //   type: String,
+    //   required: true,
+    // },
+    city: {
+      type: String,
+      required: true,
+    },
+    province: {
+      type: String,
+      required: true,
+    },
+    country: {
+      type: String,
+      required: true,
+    },
+    // guestCount: {
+    //   type: Number,
+    //   required: true,
+    // },
+    // bedroomCount: {
+    //   type: Number,
+    //   required: true,
+    // },
+    // bedCount: {
+    //   type: Number,
+    //   required: true,
+    // },
+    // bathroomCount: {
+    //   type: Number,
+    //   required: true,
+    // },
+    amenities: {
+      type: Array,
+      default: [],
+    },
+    listingPhotoPaths: [{ type: String }],
+
+    description: {
+      type: String,
+      required: true,
+    },
+    highlight: {
+      type: String,
+      required: true,
+    },
+    highlightDesc: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      default: 0,
+    },
+    rooms: [
+      {
+        roomType: String,
+        price: Number,
+      },
+    ],
+    guestCount: {
+      type: Number,
+      default: 0,
+    },
+    bedroomCount: {
+      type: Number,
+      default: 0,
+    },
+    bedCount: {
+      type: Number,
+      default: 0,
+    },
+    bathroomCount: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { timestamps: true }
+);
+
+const Listing = mongoose.model("Listing", ListingSchema);
+module.exports = Listing;
