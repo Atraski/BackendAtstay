@@ -6,7 +6,12 @@ const nodemailer = require("nodemailer"); // Import Nodemailer
 require("./Config");
 const s = require("./Formatstay");
 const Room = require("./room");
-
+const authRoutes = require("./routes/auth.js");
+const listingRoutes = require("./routes/listing.js");
+const bookingRoutes = require("./routes/booking.js");
+const userRoutes = require("./routes/user.js");
+const availabilityRoutes = require("./routes/availability.js");
+const host = require("./routes/host.js");
 const form = require("./Formm");
 const pdf = require("html-pdf");
 var instance = require("./Razorpay");
@@ -19,8 +24,16 @@ app.use(express.urlencoded({ extended: true }));
 
 app.listen(process.env.PORT);
 
+app.use(express.static("public"));
 // we link the router files to make our route easy
-app.use(require("./router/routes"));
+// app.use(require("./router/routes.js"));
+/* ROUTES */
+app.use("/auth", authRoutes);
+app.use("/properties", listingRoutes);
+app.use("/bookings", bookingRoutes);
+app.use("/users", userRoutes);
+app.use("/api", availabilityRoutes);
+app.use("/api", host);
 
 const updatedStatus = {};
 
@@ -343,3 +356,16 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
 });
 
 // You can define other endpoints here
+app.post("/Order4", async (req, resp) => {
+  const { amount } = req.body;
+  const option = {
+    amount: Number(amount * 100),
+    currency: "INR",
+  };
+  const order = await instance.orders.create(option);
+  console.log(order);
+  resp.status(200).json({
+    success: true,
+    order,
+  });
+});
