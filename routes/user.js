@@ -24,34 +24,52 @@ router.get("/:userId/trips", async (req, res) => {
 router.patch("/:userId/:listingId", async (req, res) => {
   try {
     const { userId, listingId } = req.params;
+    console.log("adding to wishlish route hit", userId, listingId);
     const user = await User.findById(userId);
-    const listing = await Listing.findById(listingId).populate("creator");
+    // const listing = await Listing.findById(listingId).populate("creator");
 
     const favoriteListing = user.wishList.find(
-      (item) => item._id.toString() === listingId
+      (item) => item.toString() === listingId
     );
+    console.log("favoriteListing", favoriteListing);
 
     if (favoriteListing) {
       user.wishList = user.wishList.filter(
-        (item) => item._id.toString() !== listingId
+        (item) => item.toString() !== listingId
       );
-      await user.save();
-      res
-        .status(200)
-        .json({
-          message: "Listing is removed from wish list",
-          wishList: user.wishList,
-        });
+      const resp = await user.save();
+      console.log(resp);
+      res.status(200).json({
+        message: "Listing is removed from wish list",
+        wishList: user.wishList,
+      });
     } else {
-      user.wishList.push(listing);
-      await user.save();
-      res
-        .status(200)
-        .json({
-          message: "Listing is added to wish list",
-          wishList: user.wishList,
-        });
+      console.log("else part executed");
+      user.wishList.push(listingId);
+      const resp = await user.save();
+      console.log(resp);
+      res.status(200).json({
+        message: "Listing is added to wish list",
+        wishList: resp.wishList,
+      });
     }
+  } catch (err) {
+    console.log(err);
+    res.status(404).json({ error: err.message });
+  }
+});
+
+// get all wishlist updated at login time
+router.get("/:userId/getAllWishlist", async (req, res) => {
+  try {
+    console.log("get all wishlist");
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    console.log(user);
+    res.status(200).json({
+      message: "Listing is added to wish list",
+      wishList: user.wishList,
+    });
   } catch (err) {
     console.log(err);
     res.status(404).json({ error: err.message });

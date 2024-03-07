@@ -49,22 +49,7 @@ const ListingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // guestCount: {
-    //   type: Number,
-    //   required: true,
-    // },
-    // bedroomCount: {
-    //   type: Number,
-    //   required: true,
-    // },
-    // bedCount: {
-    //   type: Number,
-    //   required: true,
-    // },
-    // bathroomCount: {
-    //   type: Number,
-    //   required: true,
-    // },
+
     amenities: {
       type: Array,
       default: [],
