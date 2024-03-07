@@ -141,11 +141,9 @@ router.get("/", async (req, res) => {
   try {
     let listings;
     if (qCategory) {
-      listings = await Listing.find({ category: qCategory }).populate(
-        "creator"
-      );
+      listings = await Listing.find({ category: qCategory });
     } else {
-      listings = await Listing.find().populate("creator");
+      listings = await Listing.find();
     }
 
     res.status(200).json(listings);
@@ -163,16 +161,19 @@ router.get("/search/:search", async (req, res) => {
 
   try {
     let listings = [];
+    console.log("search property route hit");
 
     if (search === "all") {
-      listings = await Listing.find().populate("creator");
+      listings = await Listing.find();
     } else {
       listings = await Listing.find({
         $or: [
           { category: { $regex: search, $options: "i" } },
           { title: { $regex: search, $options: "i" } },
+          { city: { $regex: search, $options: "i" } },
+          { type: { $regex: search, $options: "i" } },
         ],
-      }).populate("creator");
+      });
     }
 
     res.status(200).json(listings);
