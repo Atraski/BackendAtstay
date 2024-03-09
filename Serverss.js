@@ -14,6 +14,7 @@ const availabilityRoutes = require("./routes/availability.js");
 const host = require("./routes/host.js");
 const form = require("./Formm");
 const pdf = require("html-pdf");
+const html_to_pdf = require("html-pdf-node");
 var instance = require("./Razorpay");
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
@@ -21,6 +22,7 @@ app.use(express.json());
 const cors = require("cors");
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
 app.listen(process.env.PORT);
 
@@ -354,6 +356,55 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
     });
   }
 });
+
+// app.post("/sendInvoiceByEmail", async (req, resp) => {
+//   try {
+//     // Extract data from the request
+//     const { clientEmail, invoicePDF } = req.body;
+//     if (!clientEmail) {
+//       throw new Error("Client email is missing");
+//     }
+//     console.log("clientEmail", clientEmail);
+//     const emailContent = `
+//     <p>Dear Customer,</p>
+//     <p>Please find attached your invoice.</p>
+//     <p>Thank you for your business.</p>
+//   `;
+//     // Decode base64 data to create a buffer
+//     const pdfBuffer = Buffer.from(invoicePDF, "base64");
+
+//     // Create Nodemailer email options
+//     const mailOptions = {
+//       from: "khushi.singh89208@gmail.com",
+//       to: clientEmail,
+//       subject: "Invoice",
+//       text: "Your payment is Successful thankyou for your reservation ",
+//       html: emailContent, // Email content in HTML format
+//       attachments: [
+//         {
+//           filename: "Invoice.pdf",
+//           content: pdfBuffer,
+//           encoding: "base64",
+//         },
+//       ],
+//     };
+
+//     // Send the email
+//     const info = await transporter.sendMail(mailOptions);
+//     console.log("Email sent:", info.response);
+
+//     resp.status(200).json({
+//       success: true,
+//       message: "Email sent successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error sending email:", error);
+//     resp.status(500).json({
+//       success: false,
+//       error: "Error sending email",
+//     });
+//   }
+// });
 
 // You can define other endpoints here
 app.post("/Order4", async (req, resp) => {
