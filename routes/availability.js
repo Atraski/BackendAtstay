@@ -109,27 +109,65 @@ router.post("/availability/particular-room", async (req, res) => {
       });
 
       console.log(availability);
-      if (!availability || availability.length < 1) {
-        return res
-          .status(200)
-          .json({ message: "Availability not found", code: 2 });
+      if (availability.length == 0) {
+        return res.json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
       }
-      res.status(200).json({ availability });
+      if (
+        !availability ||
+        availability.length < 1 ||
+        availability.length !== date.length
+      ) {
+        return res.status(200).json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
+      }
+      let availabilityEntire = true;
+      availability.forEach((element) => {
+        if (element.bookingStatus !== "Available") {
+          availabilityEntire = false;
+        }
+      });
+      res.status(200).json({ roomAvailability: availabilityEntire });
     } else {
       const availability = await Availability.find({
         hotelId: hotelId,
         date: { $in: date },
       });
-      console.log(availability);
-      if (!availability || availability.length < 1) {
-        return res.status(404).json({ message: "Availability not found" });
+      console.log("availability", availability);
+      // res.json({ availability });
+      if (availability.length == 0) {
+        return res.json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
+      }
+      if (
+        !availability ||
+        availability.length < 1 ||
+        availability.length !== date.length
+      ) {
+        return res.json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
       }
       let roomAvailability = true;
       let temp;
       availability.forEach((element) => {
         temp = element.rooms.filter((elem) => elem.roomType == roomType);
-        console.log(temp);
-        if (temp[0].max < temp[0].booked + roomNum) {
+        console.log("temp", temp);
+
+        if (temp.length > 0 && temp[0].max < temp[0].booked + roomNum) {
+          roomAvailability = false;
+        } else if (temp.length === 0) {
           roomAvailability = false;
         }
       });
@@ -147,12 +185,12 @@ router.post("/availability/particular-room", async (req, res) => {
   }
 });
 
-router.get("/testavail", async (req, res) => {
-  try {
-    res.json({ msg: "Availability route working" });
-  } catch (error) {
-    console.log(error.message);
-  }
-});
+// router.get("/testavail", async (req, res) => {
+//   try {
+//     res.json({ msg: "Availability route working" });
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// });
 
 module.exports = router;

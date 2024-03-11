@@ -14,6 +14,12 @@ const BookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    userId: {
+      type: String,
+    },
+    contact: {
+      type: String,
+    },
     roomType: {
       type: String,
       required: true,
@@ -24,6 +30,10 @@ const BookingSchema = new mongoose.Schema(
     },
     adult: {
       type: Number,
+      required: true,
+    },
+    placeType: {
+      type: String,
       required: true,
     },
     children: {

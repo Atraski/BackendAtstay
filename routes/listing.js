@@ -44,6 +44,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
       singleRoom,
       doubleRoom,
       deluxRoom,
+      pincode,
     } = req.body;
     // console.log(req.body);
     // console.log(req.body.rooms);
@@ -82,6 +83,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
         highlight,
         highlightDesc,
         rooms,
+        pincode,
       };
     } else if (type === "An entire place") {
       FinalListing = {
@@ -104,6 +106,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
         bedroomCount,
         bedCount,
         bathroomCount,
+        pincode,
       };
     }
     console.log(FinalListing);

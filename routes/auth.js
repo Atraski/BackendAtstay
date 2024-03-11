@@ -22,7 +22,7 @@ const upload = multer({ storage });
 router.post("/register", upload.single("profileImage"), async (req, res) => {
   try {
     /* Take all information from the form */
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, contact } = req.body;
 
     /* The uploaded file is available as req.file */
     const profileImage = req.file;
@@ -51,6 +51,7 @@ router.post("/register", upload.single("profileImage"), async (req, res) => {
       email,
       password: hashedPassword,
       profileImagePath,
+      contact,
     });
 
     /* Save the new User */
@@ -100,6 +101,7 @@ router.post("/login", async (req, res) => {
       wishList: user.wishList,
       propertyList: user.propertyList,
       reservationList: user.reservationList,
+      contact: user.contact,
     };
     res.status(200).json({ token, user: temp });
   } catch (err) {

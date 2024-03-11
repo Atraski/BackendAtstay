@@ -11,9 +11,13 @@ const AvailabilitySchema = new mongoose.Schema(
     type: {
       type: String,
     },
-    Availability: {
-      type: Boolean,
-      default: false,
+    // Availability: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    bookingStatus: {
+      type: String,
+      default: "",
     },
     rooms: [
       {

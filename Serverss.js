@@ -299,7 +299,7 @@ app.post("/saveDataToDatabase1", async (req, resp) => {
 
 app.post("/sendInvoiceByEmail", async (req, resp) => {
   try {
-    const { clientEmail, invoiceHTML } = req.body;
+    const { clientEmail, invoiceHTML, hostEmail } = req.body;
 
     const generatePDF = async (htmlContent) => {
       return new Promise((resolve, reject) => {
@@ -326,7 +326,7 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
     const pdfBuffer = await generatePDF(invoiceHTML);
 
     // Create Nodemailer email options
-    const mailOptions = {
+    let mailOptions = {
       from: "khushi.singh89208@gmail.com",
       to: clientEmail,
       subject: "Invoice",
@@ -343,6 +343,23 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
     // Send the email
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent:", info.response);
+
+    // sending mail to host
+    mailOptions = {
+      from: "khushi.singh89208@gmail.com",
+      to: hostEmail,
+      subject: "Booking Invoice",
+      text: "There is a new Booking for your property",
+      attachments: [
+        {
+          filename: "Invoice.pdf",
+          content: pdfBuffer,
+          encoding: "base64",
+        },
+      ],
+    };
+    const infoHost = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", infoHost.response);
 
     resp.status(200).json({
       success: true,
@@ -407,16 +424,3 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
 // });
 
 // You can define other endpoints here
-app.post("/Order4", async (req, resp) => {
-  const { amount } = req.body;
-  const option = {
-    amount: Number(amount * 100),
-    currency: "INR",
-  };
-  const order = await instance.orders.create(option);
-  console.log(order);
-  resp.status(200).json({
-    success: true,
-    order,
-  });
-});
