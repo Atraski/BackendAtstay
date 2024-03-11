@@ -18,9 +18,14 @@ router.post("/create", async (req, res) => {
       totalPrice,
       status,
       paymentStatus,
+      type,
+      contact,
+      userId,
       razorpay_order_id,
       razorpay_payment_id,
     } = req.body;
+
+    console.log("create booking route hit ", req.body);
     const newBooking = new Booking({
       email,
       hostId,
@@ -31,6 +36,9 @@ router.post("/create", async (req, res) => {
       children,
       startDate,
       endDate,
+      placeType: type,
+      contact,
+      userId,
       totalPrice,
       status,
       paymentStatus,

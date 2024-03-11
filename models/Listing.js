@@ -45,6 +45,9 @@ const ListingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    pincode: {
+      type: String,
+    },
     country: {
       type: String,
       required: true,
