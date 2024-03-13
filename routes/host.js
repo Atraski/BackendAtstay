@@ -1,21 +1,33 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Host = require("../models/Host");
 
-// Create a new host
+// Assuming you have imported necessary dependencies and models
+
+// Apply express.json() middleware to parse JSON request bodies
+router.use(express.json());
+
 router.post("/Registerhosts", async (req, res) => {
   try {
-    /* Take all information from the form */
     const { firstName, lastName, email, password, contact } = req.body;
-    console.log("body", req.body);
+
+    // Check if any required fields are missing
+    if (!firstName || !lastName || !email || !password || !contact) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Check if email is already registered
     const existingUser = await Host.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists!" });
+      return res.status(409).json({ message: "User already exists" });
     }
-    /* Hass the password */
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new host
     const host = new Host({
       firstName,
       lastName,
@@ -23,14 +35,18 @@ router.post("/Registerhosts", async (req, res) => {
       password: hashedPassword,
       contact,
     });
-    console.log(host);
+
+    // Save the host to the database
     await host.save();
-    res.status(201).json({ message: "User registered successfully!" });
+
+    // Respond with success message
+    res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
+    // Handle any errors
+    console.error("Registration failed:", error);
     res
       .status(500)
-      .json({ message: "Registration failed!", error: error.message });
-    console.log(error);
+      .json({ message: "Registration failed", error: error.message });
   }
 });
 
