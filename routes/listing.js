@@ -43,7 +43,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
       price,
       singleRoom,
       doubleRoom,
-      deluxRoom,
+      deluxeRoom,
       pincode,
     } = req.body;
     // console.log(req.body);
@@ -57,14 +57,14 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
     const listingPhotoPaths = listingPhotos.map((file) => file.path);
     if (type === "Rooms") {
       const rooms = [
-        { roomType: "single", price: singleRoom },
+        { roomType: "standard", price: singleRoom },
         {
           roomType: "double",
           price: doubleRoom,
         },
         {
-          roomType: "delux",
-          price: deluxRoom,
+          roomType: "deluxe",
+          price: deluxeRoom,
         },
       ];
       FinalListing = {
