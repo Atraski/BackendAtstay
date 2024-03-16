@@ -192,6 +192,7 @@ router.get("/search/:search", async (req, res) => {
 router.get("/:listingId", async (req, res) => {
   try {
     const { listingId } = req.params;
+    // console.log(listingId);
     const listing = await Listing.find({ hotelId: listingId });
     console.log(listing);
     res.status(202).json(listing);
@@ -260,4 +261,21 @@ router.post("/createListing", async (req, res) => {
   }
 });
 
+router.patch("/updateListing", async (req, res) => {
+  try {
+    console.log("data form frontend: ", req.body);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.get("/getListingsHost/:hostId", async (req, res) => {
+  try {
+    const { hostId } = req.params;
+    const resp = await Listing.find({ hostId });
+    res.json(resp);
+  } catch (error) {
+    console.log(error);
+  }
+});
 module.exports = router;
