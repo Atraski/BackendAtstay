@@ -194,7 +194,7 @@ router.get("/:listingId", async (req, res) => {
     const { listingId } = req.params;
     // console.log(listingId);
     const listing = await Listing.find({ hotelId: listingId });
-    console.log(listing);
+    // console.log(listing);
     res.status(202).json(listing);
   } catch (err) {
     res
@@ -264,6 +264,13 @@ router.post("/createListing", async (req, res) => {
 router.patch("/updateListing", async (req, res) => {
   try {
     console.log("data form frontend: ", req.body);
+    const { hostId, hotelId, title } = req.body;
+    const resp = await Listing.findOneAndUpdate(
+      { hostId, hotelId },
+      { title },
+      { new: true }
+    );
+    console.log("updated value: ", resp);
   } catch (error) {
     console.log(error);
   }
