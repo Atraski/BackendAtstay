@@ -264,13 +264,52 @@ router.post("/createListing", async (req, res) => {
 router.patch("/updateListing", async (req, res) => {
   try {
     console.log("data form frontend: ", req.body);
-    const { hostId, hotelId, title } = req.body;
+    const {
+      hostId,
+      hotelId,
+      title,
+      category,
+      type,
+      streetAddress,
+      city,
+      province,
+      country,
+      amenities,
+      description,
+      highlight,
+      highlightDesc,
+      pincode,
+      price,
+      standardRoom,
+      doubleRoom,
+      deluxeRoom,
+    } = req.body;
     const resp = await Listing.findOneAndUpdate(
       { hostId, hotelId },
-      { title },
+      {
+        title,
+        category,
+        type,
+        streetAddress,
+        city,
+        province,
+        country,
+        amenities,
+        description,
+        highlight,
+        highlightDesc,
+        pincode,
+        price,
+        rooms: [
+          { roomType: "standard", price: standardRoom },
+          { roomType: "double", price: doubleRoom },
+          { roomType: "deluxe", price: deluxeRoom },
+        ],
+      },
       { new: true }
     );
     console.log("updated value: ", resp);
+    res.json(resp);
   } catch (error) {
     console.log(error);
   }
