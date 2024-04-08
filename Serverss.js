@@ -3,6 +3,8 @@ require("dotenv").config({ path: "./.env" });
 const crypto = require("crypto");
 const app = express();
 const nodemailer = require("nodemailer"); // Import Nodemailer
+const PDFDocument = require("pdfkit"); // Import pdfkit properly
+const cheerio = require("cheerio");
 require("./Config");
 const s = require("./Formatstay");
 const Room = require("./room");
@@ -281,7 +283,7 @@ app.post("/saveDataToDatabase1", async (req, resp) => {
     });
 
     const savedFormData1 = await formData1.save();
-    console.log("Form data saved:", savedFormData1);
+    // console.log("Form data saved:", savedFormData1);
 
     // Call the sendInvoiceByEmail function here if needed
     resp.status(200).json({
@@ -300,6 +302,7 @@ app.post("/saveDataToDatabase1", async (req, resp) => {
 app.post("/sendInvoiceByEmail", async (req, resp) => {
   try {
     const { clientEmail, invoiceHTML, hostEmail } = req.body;
+    console.log(req.body);
 
     const generatePDF = async (htmlContent) => {
       return new Promise((resolve, reject) => {
@@ -424,3 +427,101 @@ app.post("/sendInvoiceByEmail", async (req, resp) => {
 // });
 
 // You can define other endpoints here
+
+// app.post("/sendInvoiceByEmail", async (req, resp) => {
+//   try {
+//     const { clientEmail, invoiceHTML, hostEmail } = req.body;
+
+//     // Generate PDF from HTML content
+//     const pdfBuffer = await generatePDF(invoiceHTML);
+
+//     // Send invoice email to client
+//     const clientMailOptions = {
+//       from: "khushi.singh89208@gmail.com",
+//       to: clientEmail,
+//       subject: "Invoice",
+//       text: "Your payment is Successful. Thank you for your reservation.",
+//       attachments: [
+//         {
+//           filename: "Invoice.pdf",
+//           content: pdfBuffer,
+//           encoding: "base64",
+//         },
+//       ],
+//     };
+
+//     const clientInfo = await transporter.sendMail(clientMailOptions);
+//     console.log("Email sent to client:", clientInfo.response);
+
+//     // Send notification email to host
+//     const hostMailOptions = {
+//       from: "khushi.singh89208@gmail.com",
+//       to: hostEmail,
+//       subject: "Booking Invoice",
+//       text: "There is a new Booking for your property",
+//       attachments: [
+//         {
+//           filename: "Invoice.pdf",
+//           content: pdfBuffer,
+//           encoding: "base64",
+//         },
+//       ],
+//     };
+
+//     const hostInfo = await transporter.sendMail(hostMailOptions);
+//     console.log("Email sent to host:", hostInfo.response);
+
+//     resp.status(200).json({
+//       success: true,
+//       message: "Emails sent successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error sending emails:", error);
+//     resp.status(500).json({
+//       success: false,
+//       error: "Error sending emails",
+//     });
+//   }
+// });
+
+// async function generatePDF(htmlContent) {
+//   return new Promise((resolve, reject) => {
+//     const doc = new PDFDocument();
+//     const buffers = [];
+
+//     const $ = cheerio.load(htmlContent); // Load HTML content with Cheerio
+//     console.log("Parsed HTML:", $.html()); // Log parsed HTML content
+
+//     // Iterate over HTML elements and add them to the PDF
+//     $("body")
+//       .children()
+//       .each((index, element) => {
+//         const elementType = element.name;
+//         console.log("Element type:", elementType); // Log element type
+//         if (elementType === "p") {
+//           doc.text($(element).text()); // Add paragraphs
+//         } else if (
+//           elementType === "h1" ||
+//           elementType === "h2" ||
+//           elementType === "h3"
+//         ) {
+//           doc.fontSize(14).text($(element).text()).moveDown(0.5); // Add headings
+//         } else if (elementType === "ul" || elementType === "ol") {
+//           $(element)
+//             .children()
+//             .each((index, child) => {
+//               doc.text(`- ${$(child).text()}`); // Add lists
+//             });
+//         } // Add more conditions for other HTML elements as needed
+//       });
+
+//     // Pipe the PDF output to buffers
+//     doc.on("data", buffers.push.bind(buffers));
+//     doc.on("end", () => {
+//       const pdfData = Buffer.concat(buffers);
+//       resolve(pdfData);
+//     });
+
+//     doc.end(); // End the document
+//   });
+// }

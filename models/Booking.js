@@ -68,6 +68,11 @@ const BookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    guestCount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
