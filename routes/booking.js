@@ -25,6 +25,7 @@ router.post("/create", async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       datesArray,
+      guestCount,
     } = req.body;
 
     console.log("create booking route hit ", req.body);
@@ -46,6 +47,7 @@ router.post("/create", async (req, res) => {
       paymentStatus,
       razorpay_order_id,
       razorpay_payment_id,
+      guestCount,
     });
     const resp = await newBooking.save();
 
