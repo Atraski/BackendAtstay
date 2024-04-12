@@ -127,7 +127,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
 // get all listings
 router.get("/getALL", async (req, res) => {
   try {
-    const resp = await Listing.find({});
+    const resp = await Listing.find({ verification: true });
     res.status(200).json(resp);
   } catch (err) {
     res
@@ -144,9 +144,12 @@ router.get("/", async (req, res) => {
   try {
     let listings;
     if (qCategory) {
-      listings = await Listing.find({ category: qCategory });
+      listings = await Listing.find({
+        category: qCategory,
+        verification: true,
+      });
     } else {
-      listings = await Listing.find();
+      listings = await Listing.find({ verification: true });
     }
 
     res.status(200).json(listings);
@@ -167,14 +170,20 @@ router.get("/search/:search", async (req, res) => {
     console.log("search property route hit");
 
     if (search === "all") {
-      listings = await Listing.find();
+      listings = await Listing.find({ verification: true });
     } else {
       listings = await Listing.find({
-        $or: [
-          { category: { $regex: search, $options: "i" } },
-          { title: { $regex: search, $options: "i" } },
-          { city: { $regex: search, $options: "i" } },
-          { type: { $regex: search, $options: "i" } },
+        $and: [
+          {
+            $or: [
+              { category: { $regex: search, $options: "i" } },
+              { title: { $regex: search, $options: "i" } },
+              { city: { $regex: search, $options: "i" } },
+              { type: { $regex: search, $options: "i" } },
+            ],
+          },{
+            verification:true
+          }
         ],
       });
     }
@@ -320,6 +329,16 @@ router.get("/getListingsHost/:hostId", async (req, res) => {
     const { hostId } = req.params;
     const resp = await Listing.find({ hostId });
     res.json(resp);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.delete("/:hotelid", async (req, res) => {
+  const hotelid = req.params.hotelid;
+  try {
+    const data = await Listing.findOneAndDelete({ hotelId: hotelid });
+    res.json({ msg: "Your Property is deleted successfully" });
   } catch (error) {
     console.log(error);
   }
