@@ -4,7 +4,7 @@
   "main": "Config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon ./Serverss.js"
+    "dev": "nodemon --env-file=config.env ./Serverss.js"
   },
   "author": "",
   "license": "ISC",
@@ -29,6 +29,7 @@
     "multer-gridfs-storage": "^5.0.2",
     "nodemailer": "^6.9.7",
     "pdfkit": "^0.15.0",
+    "puppeteer": "^22.7.1",
     "razorpay": "^2.9.1",
     "uniqid": "^5.4.0"
   }

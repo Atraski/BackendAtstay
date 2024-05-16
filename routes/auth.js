@@ -3,8 +3,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 var uniqid = require("uniqid");
-
+const nodemailer = require("nodemailer");
 const User = require("../models/User");
+
+const clientUrl = "http://localhost:3000";
 
 /* Configuration Multer for File Upload */
 const storage = multer.diskStorage({
@@ -111,3 +113,88 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
+
+// Reset Password
+router.post("/reset", async (req, res, next) => {
+  const email = req.body.email;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const error = new Error("Email not found!");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Nodemailer Config
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "atstaytravel@gmail.com",
+        pass: "emqr amor owjl fpax",
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    // Creating the token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "30m",
+    });
+
+    const resetLink = `${clientUrl}/reset/${token}`;
+
+    const options = {
+      from: "atstaytravel@gmail.com",
+      to: email,
+      subject: "Reset Password",
+      text: `Click the link- ${resetLink} to reset your password.`,
+    };
+
+    // Send the email
+    const mailResponse = await transporter.sendMail(options);
+    console.log("Email sent:", mailResponse.response);
+
+    res.status(200).send({ message: "Email sent successfully!" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/new-password", async (req, res, next) => {
+  const { resetToken, password, confirmPassword } = req.body;
+
+  try {
+    const decodedToken = jwt.verify(resetToken, process.env.JWT_SECRET);
+
+    const user = await User.findOne({ _id: decodedToken.id });
+
+    if (!user) {
+      const error = new Error("User not found!");
+      error.statusCode(404);
+      throw error;
+    }
+
+    if (password.trim() !== confirmPassword.trim()) {
+      const error = new Error("Passwords should match!");
+      error.statusCode(401);
+      throw error;
+    }
+
+    user.password = await bcrypt.hash(password, 12);
+    await user.save();
+
+    res.status(200).send({ message: "Reset successful" });
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      err.message = "Token expired.";
+      next(err);
+    }
+
+    next(err);
+  }
+});

@@ -94,6 +94,7 @@ router.post("/getUserBookingData", async (req, res) => {
     console.log("email : ", email);
     const booking = await Booking.find({ email });
     const temp = booking.reverse();
+    console.log(temp);
     res.json({ booking: temp });
   } catch (error) {
     console.log(error);

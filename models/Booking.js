@@ -28,16 +28,8 @@ const BookingSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    adult: {
-      type: Number,
-      required: true,
-    },
     placeType: {
       type: String,
-      required: true,
-    },
-    children: {
-      type: Number,
       required: true,
     },
     startDate: {
