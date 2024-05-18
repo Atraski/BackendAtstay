@@ -5,6 +5,7 @@ const multer = require("multer");
 var uniqid = require("uniqid");
 const nodemailer = require("nodemailer");
 const User = require("../models/User");
+const Host = require("../models/Host");
 
 const clientUrl = "http://localhost:3000";
 
@@ -116,17 +117,9 @@ module.exports = router;
 
 // Reset Password
 router.post("/reset", async (req, res, next) => {
-  const email = req.body.email;
+  const { email, type } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      const error = new Error("Email not found!");
-      error.statusCode = 404;
-      throw error;
-    }
-
     // Nodemailer Config
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -141,12 +134,39 @@ router.post("/reset", async (req, res, next) => {
       },
     });
 
-    // Creating the token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "30m",
-    });
+    let token;
 
-    const resetLink = `${clientUrl}/reset/${token}`;
+    let user;
+    if (type === "user") {
+      user = await User.findOne({ email });
+
+      if (!user) {
+        const error = new Error("Email not found!");
+        error.statusCode = 404;
+        throw error;
+      }
+      // Creating the token
+      token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "30m",
+      });
+    }
+
+    let host;
+    if (type === "host") {
+      host = await Host.findOne({ email });
+
+      if (!host) {
+        const error = new Error("Email not found!");
+        error.statusCode = 404;
+        throw error;
+      }
+      // Creating the token
+      token = jwt.sign({ id: host._id }, process.env.JWT_SECRET, {
+        expiresIn: "30m",
+      });
+    }
+
+    const resetLink = `${clientUrl}/reset/${token}?type=${type}`;
 
     const options = {
       from: "atstaytravel@gmail.com",
@@ -159,24 +179,40 @@ router.post("/reset", async (req, res, next) => {
     const mailResponse = await transporter.sendMail(options);
     console.log("Email sent:", mailResponse.response);
 
-    res.status(200).send({ message: "Email sent successfully!" });
+    res.status(200).send({ message: `Email sent successfully! - ${type}` });
   } catch (err) {
     next(err);
   }
 });
 
 router.post("/new-password", async (req, res, next) => {
-  const { resetToken, password, confirmPassword } = req.body;
+  const { resetToken, password, confirmPassword, type } = req.body;
+
+  console.log("Type", type);
 
   try {
     const decodedToken = jwt.verify(resetToken, process.env.JWT_SECRET);
 
-    const user = await User.findOne({ _id: decodedToken.id });
+    let user;
+    if (type === "user") {
+      user = await User.findOne({ _id: decodedToken.id });
 
-    if (!user) {
-      const error = new Error("User not found!");
-      error.statusCode(404);
-      throw error;
+      if (!user) {
+        const error = new Error("User not found!");
+        error.statusCode(404);
+        throw error;
+      }
+    }
+
+    let host;
+    if (type === "host") {
+      host = await Host.findOne({ _id: decodedToken.id });
+
+      if (!host) {
+        const error = new Error("Host not found!");
+        error.statusCode(404);
+        throw error;
+      }
     }
 
     if (password.trim() !== confirmPassword.trim()) {
@@ -185,8 +221,17 @@ router.post("/new-password", async (req, res, next) => {
       throw error;
     }
 
-    user.password = await bcrypt.hash(password, 12);
-    await user.save();
+    if (type === "user") {
+      user.password = await bcrypt.hash(password, 12);
+
+      await user.save();
+    }
+
+    if (type === "host") {
+      host.password = await bcrypt.hash(password, 12);
+
+      await host.save();
+    }
 
     res.status(200).send({ message: "Reset successful" });
   } catch (err) {
