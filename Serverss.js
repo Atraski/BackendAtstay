@@ -16,8 +16,16 @@ const sendingEmailController = require("./controllers/sendEmail.js");
 
 const app = express();
 
+const corsOptions = {
+  // origin: "https://astay.in",
+  origin: "*",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Enable this if you need to send cookies or HTTP authentication headers
+  optionsSuccessStatus: 204,
+};
+
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 

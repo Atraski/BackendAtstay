@@ -162,40 +162,59 @@ router.get("/", async (req, res) => {
 });
 
 /* GET LISTINGS BY SEARCH */
-router.get("/search/:search", async (req, res) => {
-  const { search } = req.params;
+router.get(
+  "/search/:search?/:checkin?/:checkout?/:guest",
+  async (req, res, next) => {
+    const { search, checkin, checkout, guest } = req.params;
 
-  try {
-    let listings = [];
-    console.log("search property route hit");
+    try {
+      let listings = [];
+      console.log("search property route hit");
 
-    if (search === "all") {
-      listings = await Listing.find({ verification: true });
-    } else {
-      listings = await Listing.find({
-        $and: [
-          {
+      const query = {};
+
+      if (search === "all") {
+        query.verification = true;
+      } else {
+        const searchConditions = [
+          { category: { $regex: search, $options: "i" } },
+          { title: { $regex: search, $options: "i" } },
+          { city: { $regex: search, $options: "i" } },
+          { type: { $regex: search, $options: "i" } },
+        ];
+
+        query.$and = [{ $or: searchConditions }, { verification: true }];
+
+        if (checkin && checkout) {
+          query.$and.push({
             $or: [
-              { category: { $regex: search, $options: "i" } },
-              { title: { $regex: search, $options: "i" } },
-              { city: { $regex: search, $options: "i" } },
-              { type: { $regex: search, $options: "i" } },
+              {
+                checkin: { $lte: new Date(checkin) },
+                checkout: { $gte: new Date(checkin) },
+              },
+              {
+                checkin: { $lte: new Date(checkout) },
+                checkout: { $gte: new Date(checkout) },
+              },
+              {
+                $and: [
+                  { checkin: { $gte: new Date(checkin) } },
+                  { checkout: { $lte: new Date(checkout) } },
+                ],
+              },
             ],
-          },{
-            verification:true
-          }
-        ],
-      });
-    }
+          });
+        }
+      }
 
-    res.status(200).json(listings);
-  } catch (err) {
-    res
-      .status(404)
-      .json({ message: "Fail to fetch listings", error: err.message });
-    console.log(err);
+      listings = await Listing.find(query);
+
+      res.status(200).json(listings);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /* LISTING DETAILS */
 router.get("/:listingId", async (req, res) => {

@@ -22,11 +22,9 @@ const BookingSchema = new mongoose.Schema(
     },
     roomType: {
       type: String,
-      required: true,
     },
     roomCount: {
       type: Number,
-      required: true,
     },
     placeType: {
       type: String,

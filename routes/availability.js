@@ -4,11 +4,13 @@ const router = require("express").Router();
 const Listing = require("../models/Listing");
 
 // Controller function to create new availability
-
 router.post("/createAvailabilities", async (req, res) => {
   try {
-    const { date, hotelId, type } = req.body;
-    if (type === "An entire place") {
+    const { hotelId, type } = req.body;
+    if (type === "Rooms") {
+      const { date } = req.body;
+      console.log(date);
+
       const exist = await Availability.find({ date, hotelId });
       if (exist.length > 0) {
         res.status(200).json({ message: "date and hotel already exist" });
@@ -17,16 +19,137 @@ router.post("/createAvailabilities", async (req, res) => {
         res.status(201).json(newAvailability);
       }
     } else {
-      const exist = await Availability.find({ date, hotelId });
-      if (exist.length > 0) {
-        res.status(200).json({ message: "date and hotel already exist" });
+      const { startDate, endDate } = req.body;
+      // console.log("DATES", startDate, endDate, hotelId);
+      let availability = await Availability.findOne({ hotelId });
+
+      if (availability) {
+        // If availability exists, update the dates
+        availability.entirePlaceAvailability = [{ startDate, endDate }];
       } else {
-        const newAvailability = await Availability.create(req.body);
-        res.status(201).json(newAvailability);
+        // If no availability exists, create a new entry
+        availability = new Availability({
+          hotelId,
+          entirePlaceAvailability: [{ startDate, endDate }],
+        });
       }
+
+      await availability.save();
+
+      res.status(200).send(availability);
     }
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.get("/availabilities/date-hotel", async (req, res) => {
+  const { date, hotelId } = req.query;
+  try {
+    const availability = await Availability.findOne({ date, hotelId });
+    if (!availability) {
+      return res.status(404).json({ message: "Availability not found" });
+    }
+    res.status(200).json(availability);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// for checking availability of room at the time of final booking
+router.post("/availability/particular-room", async (req, res) => {
+  const { hotelId, type } = req.body;
+
+  try {
+    if (type === "An entire place") {
+      const { startDate, endDate } = req.body;
+
+      let availability = await Availability.findOne({ hotelId });
+
+      if (!availability) {
+        return res
+          .status(404)
+          .send({ available: false, message: "Hotel not found" });
+      }
+
+      // Convert dates to Date objects
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      let isAvailable = false;
+
+      // Check if any availability period covers the desired booking dates
+      for (let period of availability.entirePlaceAvailability) {
+        const periodStart = new Date(period.startDate);
+        const periodEnd = new Date(period.endDate);
+
+        if (start >= periodStart && end <= periodEnd) {
+          isAvailable = true;
+          break;
+        }
+      }
+
+      if (isAvailable) {
+        res
+          .status(200)
+          .send({ available: true, message: "Hotel is available" });
+      } else {
+        res.status(200).send({
+          available: false,
+          message: "Hotel is not available for the selected dates",
+        });
+      }
+    } else {
+      const { roomType, roomNum, date } = req.body;
+      console.log("Date", date);
+
+      const availability = await Availability.find({
+        hotelId: hotelId,
+        date: { $in: date },
+      });
+      console.log("availability", availability);
+      // res.json({ availability });
+      if (availability.length == 0) {
+        return res.json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
+      }
+      if (
+        !availability ||
+        availability.length < 1 ||
+        availability.length !== date.length
+      ) {
+        return res.json({
+          message: "Availability not found",
+          code: 2,
+          roomAvailability: false,
+        });
+      }
+      let roomAvailability = true;
+      let temp;
+      availability.forEach((element) => {
+        temp = element.rooms.filter((elem) => elem.roomType == roomType);
+        console.log("temp", temp);
+
+        if (temp.length > 0 && temp[0].max < temp[0].booked + roomNum) {
+          roomAvailability = false;
+        } else if (temp.length === 0) {
+          roomAvailability = false;
+        }
+      });
+
+      res.status(200).json({
+        //   max: availability.rooms[roomType].max,
+        //   booked: availability.rooms[roomType].booked,
+        data: availability,
+        roomAvailability,
+        temp,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -85,107 +208,6 @@ const deleteAvailabilityById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-router.get("/availabilities/date-hotel", async (req, res) => {
-  const { date, hotelId } = req.query;
-  try {
-    const availability = await Availability.findOne({ date, hotelId });
-    if (!availability) {
-      return res.status(404).json({ message: "Availability not found" });
-    }
-    res.status(200).json(availability);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// for checking availability of room at the time of final booking
-router.post("/availability/particular-room", async (req, res) => {
-  const { date, hotelId, roomType, roomNum, type } = req.body;
-
-  try {
-    if (type === "An entire place") {
-      const availability = await Availability.find({
-        hotelId,
-        date: { $in: date },
-      });
-
-      console.log(availability);
-      if (availability.length == 0) {
-        return res.json({
-          message: "Availability not found",
-          code: 2,
-          roomAvailability: false,
-        });
-      }
-      if (
-        !availability ||
-        availability.length < 1 ||
-        availability.length !== date.length
-      ) {
-        return res.status(200).json({
-          message: "Availability not found",
-          code: 2,
-          roomAvailability: false,
-        });
-      }
-      let availabilityEntire = true;
-      availability.forEach((element) => {
-        if (element.bookingStatus !== "Available") {
-          availabilityEntire = false;
-        }
-      });
-      res.status(200).json({ roomAvailability: availabilityEntire });
-    } else {
-      const availability = await Availability.find({
-        hotelId: hotelId,
-        date: { $in: date },
-      });
-      console.log("availability", availability);
-      // res.json({ availability });
-      if (availability.length == 0) {
-        return res.json({
-          message: "Availability not found",
-          code: 2,
-          roomAvailability: false,
-        });
-      }
-      if (
-        !availability ||
-        availability.length < 1 ||
-        availability.length !== date.length
-      ) {
-        return res.json({
-          message: "Availability not found",
-          code: 2,
-          roomAvailability: false,
-        });
-      }
-      let roomAvailability = true;
-      let temp;
-      availability.forEach((element) => {
-        temp = element.rooms.filter((elem) => elem.roomType == roomType);
-        console.log("temp", temp);
-
-        if (temp.length > 0 && temp[0].max < temp[0].booked + roomNum) {
-          roomAvailability = false;
-        } else if (temp.length === 0) {
-          roomAvailability = false;
-        }
-      });
-
-      res.status(200).json({
-        //   max: availability.rooms[roomType].max,
-        //   booked: availability.rooms[roomType].booked,
-        data: availability,
-        roomAvailability,
-        temp,
-      });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 // router.get("/testavail", async (req, res) => {
 //   try {

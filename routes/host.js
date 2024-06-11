@@ -21,6 +21,7 @@ router.post("/Registerhosts", async (req, res) => {
     // Check if email is already registered
     const existingUser = await Host.findOne({ email });
     if (existingUser) {
+      console.log("USER EXISTS!");
       return res.status(409).json({ message: "User already exists" });
     }
 

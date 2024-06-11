@@ -35,6 +35,12 @@ const AvailabilitySchema = new mongoose.Schema(
         },
       },
     ],
+    entirePlaceAvailability: [
+      {
+        startDate: Date,
+        endDate: Date,
+      },
+    ],
   },
   { timestamps: true }
 );

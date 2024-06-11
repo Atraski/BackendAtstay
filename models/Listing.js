@@ -75,12 +75,25 @@ const ListingSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // For type="Rooms" only
     rooms: [
       {
         roomType: String,
         price: Number,
       },
     ],
+
+    // For type="An entire place" only
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+
     guestCount: {
       type: Number,
       default: 0,
@@ -100,7 +113,7 @@ const ListingSchema = new mongoose.Schema(
     verification: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   { timestamps: true }
 );
