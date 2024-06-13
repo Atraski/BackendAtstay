@@ -109,13 +109,12 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
         pincode,
       };
     }
-    console.log(FinalListing);
 
     const newListing = new Listing(FinalListing);
 
     await newListing.save();
-    res.json({ data: newListing });
-    // res.status(200).json(newListing);
+    // res.json({ data: newListing });
+    res.status(200).json(newListing);
   } catch (err) {
     res
       .status(409)

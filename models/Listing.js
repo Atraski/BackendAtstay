@@ -87,11 +87,9 @@ const ListingSchema = new mongoose.Schema(
     // For type="An entire place" only
     startDate: {
       type: Date,
-      required: true,
     },
     endDate: {
       type: Date,
-      required: true,
     },
 
     guestCount: {
