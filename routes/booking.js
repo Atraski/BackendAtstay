@@ -49,7 +49,6 @@ router.post("/create", async (req, res) => {
       razorpay_payment_id,
       guestCount,
     });
-    await newBooking.save();
 
     // console.log("dates array : ", datesArray);
     for (const date of datesArray) {
@@ -127,13 +126,13 @@ router.post("/create", async (req, res) => {
         razorpay_payment_id,
         guestCount,
       });
-      await newBooking.save();
     } catch (err) {
       console.error(err);
       res.status(500).send({ error: "Server error" });
     }
   }
 
+  await newBooking.save();
   res.status(200).json(newBooking);
 });
 

@@ -1,5 +1,8 @@
 const nodemailer = require("nodemailer");
 const puppeteer = require("puppeteer");
+const mongoose = require("mongoose");
+const Host = require("../models/Host");
+const Listing = require("../models/Listing");
 
 // Nodemailer Configuration
 const transporter = nodemailer.createTransport({
@@ -81,4 +84,48 @@ exports.sendEmail = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.sendVerificationEmail = async (req, res) => {
+  const verificationChange = Listing.watch();
+
+  verificationChange.on("change", async (change) => {
+    if (
+      change.operationType === "update" &&
+      change.updateDescription.updatedFields.verification === true
+    ) {
+      const listingId = change.documentKey._id;
+
+      const listing = await Listing.findOne({ _id: listingId });
+
+      const propertyName = listing.title;
+
+      const hostId = listing.hostId;
+      const host = await Host.findOne({
+        _id: new mongoose.Types.ObjectId(hostId),
+      });
+      const hostName = host.firstName + " " + host.lastName;
+      const hostEmail = host.email;
+
+      // Property Verified mail
+      const hostPropertyVerifiedMailOptions = {
+        from: "atstaytravel@gmail.com",
+        to: hostEmail,
+        subject: "Property Verified",
+        html: `<p>Dear ${hostName},</p>
+             <p>Your property has been verified.</p>
+
+             <p>We are pleased to inform you that your property "${propertyName}" has been successfully verified and is now live on our site.</p>
+
+             <p>Thank you for listing your property with us.</p>
+
+             <p>https://atstay.in/</p>
+
+            <p>Best regards,<br/>Team AtStay</p>
+            `,
+      };
+
+      await transporter.sendMail(hostPropertyVerifiedMailOptions);
+    }
+  });
 };

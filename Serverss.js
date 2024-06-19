@@ -69,6 +69,9 @@ mongoose
   .then((then) => {
     console.log("Connected to database");
     app.listen(process.env.PORT);
+
+    // Email after verification
+    sendingEmailController.sendVerificationEmail();
   })
   .catch((e) => {
     console.log(e);

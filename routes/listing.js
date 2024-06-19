@@ -2,8 +2,12 @@ const router = require("express").Router();
 const multer = require("multer");
 var uniqid = require("uniqid");
 
+const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
+
 const Listing = require("../models/Listing");
 const User = require("../models/User");
+const Host = require("../models/Host");
 var uniqid = require("uniqid");
 
 /* Configuration Multer for File Upload */
@@ -20,8 +24,20 @@ const upload = multer({ storage });
 
 /* CREATE LISTING */
 router.post("/create", upload.array("listingPhotos"), async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "atstaytravel@gmail.com",
+      pass: "emqr amor owjl fpax",
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+
   try {
-    /* Take the information from the form */
     const hotelId = uniqid();
     const {
       hostId,
@@ -46,8 +62,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
       deluxeRoom,
       pincode,
     } = req.body;
-    // console.log(req.body);
-    // console.log(req.body.rooms);
+
     const listingPhotos = req.files;
     let FinalListing;
     if (!listingPhotos) {
@@ -113,7 +128,100 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
     const newListing = new Listing(FinalListing);
 
     await newListing.save();
-    // res.json({ data: newListing });
+
+    let amount;
+    if (type === "Rooms") {
+      const priceArray = [
+        { roomType: "standard", price: singleRoom },
+        {
+          roomType: "double",
+          price: doubleRoom,
+        },
+        {
+          roomType: "deluxe",
+          price: deluxeRoom,
+        },
+      ];
+
+      amount = `
+         <table style="border-collapse: collapse; width: 100%;">
+      <thead>
+        <tr>
+          <th style="border: 1px solid black; padding: 8px;">Room Type</th>
+          <th style="border: 1px solid black; padding: 8px;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${priceArray
+          .map(
+            (room) => `
+          <tr>
+            <td style="border: 1px solid black; padding: 8px;">${
+              room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)
+            }</td>
+            <td style="border: 1px solid black; padding: 8px;">${
+              room.price
+            }</td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+      `;
+    } else {
+      amount = price;
+    }
+
+    // Pending Verification Mail
+    const adminEmail = "admin.atstay@atraski.com";
+    const adminMailOptions = {
+      from: "atstaytravel@gmail.com",
+      to: adminEmail,
+      subject: "Pending Verification",
+      html: `<p>Dear Admin,</p>
+         <p>A new property has been added and requires verification.</p>
+
+         <p><strong>Property Details:</strong></p>
+        <ul>
+          <li>Type: ${type}</li>
+          <li>Hotel Id: ${hotelId}</li>
+          <li>Host Id: ${hostId}</li>
+          <li>Property Name: ${title}</li>
+        </ul>
+        <p><strong>Prices:</strong></p>
+        ${amount} 
+        `,
+    };
+
+    const host = await Host.findOne({
+      _id: new mongoose.Types.ObjectId(hostId),
+    });
+    const hostEmail = host.email;
+    const hostName = host.firstName + " " + host.lastName;
+    const hostPendingVerificationMailOptions = {
+      from: "atstaytravel@gmail.com",
+      to: hostEmail,
+      subject: "Sent for verification",
+      html: `<p>Dear ${hostName},</p>
+         <p>Your property has been sent for verification to our team.</p>
+
+         <p><strong>Property Details:</strong></p>
+        <ul>
+          <li>Type: ${type}</li>
+          <li>Hotel Id: ${hotelId}</li>
+          <li>Host Id: ${hostId}</li>
+          <li>Property Name: ${title}</li>
+        </ul>
+        <p><strong>Prices:</strong></p>
+        ${amount}
+        <p>Best regards,<br/>Team AtStay</p>
+        `,
+    };
+
+    await transporter.sendMail(adminMailOptions);
+    await transporter.sendMail(hostPendingVerificationMailOptions);
+
     res.status(200).json(newListing);
   } catch (err) {
     res
