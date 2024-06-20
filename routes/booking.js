@@ -139,12 +139,18 @@ router.post("/create", async (req, res) => {
 // for getting all bookings of a particular user
 router.post("/getUserBookingData", async (req, res) => {
   try {
-    const { email } = req.body;
-    console.log("email : ", email);
-    const booking = await Booking.find({ email });
-    const temp = booking.reverse();
-    console.log(temp);
-    res.json({ booking: temp });
+    const { id, type } = req.body;
+
+    let bookingData;
+    if (type === "user") {
+      const booking = await Booking.find({ userId: id });
+      bookingData = booking.reverse();
+    } else {
+      const booking = await Booking.find({ hostId: id });
+      bookingData = booking.reverse();
+    }
+
+    res.json({ booking: bookingData });
   } catch (error) {
     console.log(error);
   }
