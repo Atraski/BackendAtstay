@@ -174,7 +174,7 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
     }
 
     // Pending Verification Mail
-    const adminEmail = "admin.atstay@atraski.com";
+    const adminEmail = "admin@atstay.in";
     const adminMailOptions = {
       from: "atstaytravel@gmail.com",
       to: adminEmail,
