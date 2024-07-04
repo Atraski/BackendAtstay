@@ -10,9 +10,8 @@ const BookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    listingId: {
+    hotelId: {
       type: String,
-      required: true,
     },
     userId: {
       type: String,

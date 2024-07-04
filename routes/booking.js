@@ -1,6 +1,8 @@
 const router = require("express").Router();
+const mongoose = require("mongoose");
 
 const Booking = require("../models/Booking");
+const User = require("../models/User");
 const Availability = require("../models/Availability");
 
 /* CREATE BOOKING */
@@ -8,7 +10,7 @@ router.post("/create", async (req, res) => {
   const {
     email,
     hostId,
-    listingId,
+    hotelId,
     adult,
     children,
     startDate,
@@ -32,7 +34,7 @@ router.post("/create", async (req, res) => {
     newBooking = new Booking({
       email,
       hostId,
-      listingId,
+      hotelId,
       roomType,
       roomCount,
       adult,
@@ -55,7 +57,7 @@ router.post("/create", async (req, res) => {
       const availability = await Availability.findOneAndUpdate(
         {
           date: date,
-          hotelId: listingId,
+          hotelId: hotelId,
           "rooms.roomType": roomType, // Search within rooms array for specific roomType
         },
         {
@@ -111,7 +113,7 @@ router.post("/create", async (req, res) => {
       newBooking = new Booking({
         email,
         hostId,
-        listingId,
+        hotelId,
         adult,
         children,
         startDate,
@@ -141,16 +143,23 @@ router.post("/getUserBookingData", async (req, res) => {
   try {
     const { id, type } = req.body;
 
-    let bookingData;
+    let booking;
     if (type === "user") {
-      const booking = await Booking.find({ userId: id });
-      bookingData = booking.reverse();
+      booking = await Booking.find({ userId: id });
     } else {
-      const booking = await Booking.find({ hostId: id });
-      bookingData = booking.reverse();
+      booking = await Booking.find({ hostId: id });
     }
 
-    res.json({ booking: bookingData });
+    const bookingData = booking.reverse();
+
+    const userData = await User.findOne(
+      {
+        _id: new mongoose.Types.ObjectId(bookingData.userId),
+      },
+      { firstName: 1, lastName: 1, contact: 1 }
+    );
+
+    res.json({ message: "Bookings!", booking: bookingData, userData });
   } catch (error) {
     console.log(error);
   }

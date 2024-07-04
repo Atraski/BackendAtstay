@@ -9,7 +9,7 @@ router.get("/:userId/trips", async (req, res) => {
   try {
     const { userId } = req.params;
     const trips = await Booking.find({ customerId: userId }).populate(
-      "customerId hostId listingId"
+      "customerId hostId hotelId"
     );
     res.status(202).json(trips);
   } catch (err) {
