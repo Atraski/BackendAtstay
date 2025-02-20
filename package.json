@@ -1,10 +1,10 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "Config.js",
+  "main": "Serverss.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --env-file=config.env ./Serverss.js"
+    "dev": "nodemon Serverss.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,8 +14,10 @@
     "body-parser": "^1.20.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.5.0",
     "html-pdf": "^3.0.1",
     "html-pdf-node": "^1.0.8",
     "html2pdf": "^0.0.11",

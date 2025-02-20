@@ -19,7 +19,7 @@ exports.getRoom = async (req, res, next) => {
     if (!room) {
       const error = new Error("No rooms found!");
       error.statusCode(404);
-      next(err);
+      next(error);
     }
 
     res.status(200).json(room);

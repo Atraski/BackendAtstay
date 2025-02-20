@@ -1,42 +1,26 @@
 const router = require("express").Router();
 const multer = require("multer");
-var uniqid = require("uniqid");
-
+const uniqid = require("uniqid");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 
 const Listing = require("../models/Listing");
 const User = require("../models/User");
 const Host = require("../models/Host");
-var uniqid = require("uniqid");
 
 /* Configuration Multer for File Upload */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/property/"); // Store uploaded files in the 'property' folder
+    cb(null, "public/property/"); // Store uploaded files in 'property' folder
   },
   filename: function (req, file, cb) {
-    cb(null, uniqid() + file.originalname); // Use the original file name
+    cb(null, uniqid() + file.originalname);
   },
 });
-
 const upload = multer({ storage });
 
-/* CREATE LISTING */
+/* ✅ CREATE LISTING */
 router.post("/create", upload.array("listingPhotos"), async (req, res) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    port: 465,
-    secure: true,
-    auth: {
-      user: "atstaytravel@gmail.com",
-      pass: "emqr amor owjl fpax",
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-
   try {
     const hotelId = uniqid();
     const {
@@ -63,25 +47,15 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
       pincode,
     } = req.body;
 
+    if (!hostId) return res.status(400).json({ message: "Host ID is required" });
+
     const listingPhotos = req.files;
-    let FinalListing;
-    if (!listingPhotos) {
-      return res.status(400).send("No file uploaded.");
-    }
+    if (!listingPhotos) return res.status(400).json({ message: "No file uploaded" });
 
     const listingPhotoPaths = listingPhotos.map((file) => file.path);
+    let FinalListing;
+
     if (type === "Rooms") {
-      const rooms = [
-        { roomType: "standard", price: singleRoom },
-        {
-          roomType: "double",
-          price: doubleRoom,
-        },
-        {
-          roomType: "deluxe",
-          price: deluxeRoom,
-        },
-      ];
       FinalListing = {
         hostId,
         hotelId,
@@ -97,10 +71,15 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
         description,
         highlight,
         highlightDesc,
-        rooms,
+        rooms: [
+          { roomType: "standard", price: singleRoom },
+          { roomType: "double", price: doubleRoom },
+          { roomType: "deluxe", price: deluxeRoom },
+        ],
         pincode,
+        verification: false,
       };
-    } else if (type === "An entire place") {
+    } else {
       FinalListing = {
         hostId,
         hotelId,
@@ -122,333 +101,108 @@ router.post("/create", upload.array("listingPhotos"), async (req, res) => {
         bedCount,
         bathroomCount,
         pincode,
+        verification: false,
       };
     }
 
     const newListing = new Listing(FinalListing);
-
     await newListing.save();
+    console.log("✅ New Listing Created:", newListing);
 
-    let amount;
-    if (type === "Rooms") {
-      const priceArray = [
-        { roomType: "standard", price: singleRoom },
-        {
-          roomType: "double",
-          price: doubleRoom,
-        },
-        {
-          roomType: "deluxe",
-          price: deluxeRoom,
-        },
-      ];
-
-      amount = `
-         <table style="border-collapse: collapse; width: 100%;">
-      <thead>
-        <tr>
-          <th style="border: 1px solid black; padding: 8px;">Room Type</th>
-          <th style="border: 1px solid black; padding: 8px;">Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${priceArray
-          .map(
-            (room) => `
-          <tr>
-            <td style="border: 1px solid black; padding: 8px;">${
-              room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)
-            }</td>
-            <td style="border: 1px solid black; padding: 8px;">${
-              room.price
-            }</td>
-          </tr>
-        `
-          )
-          .join("")}
-      </tbody>
-    </table>
-      `;
-    } else {
-      amount = price;
-    }
-
-    // Pending Verification Mail
-    const adminEmail = "admin@atstay.in";
-    const adminMailOptions = {
-      from: "atstaytravel@gmail.com",
-      to: adminEmail,
-      subject: "Pending Verification",
-      html: `<p>Dear Admin,</p>
-         <p>A new property has been added and requires verification.</p>
-
-         <p><strong>Property Details:</strong></p>
-        <ul>
-          <li>Type: ${type}</li>
-          <li>Hotel Id: ${hotelId}</li>
-          <li>Host Id: ${hostId}</li>
-          <li>Property Name: ${title}</li>
-        </ul>
-        <p><strong>Prices:</strong></p>
-        ${amount} 
-        `,
-    };
-
-    const host = await Host.findOne({
-      _id: new mongoose.Types.ObjectId(hostId),
-    });
-    const hostEmail = host.email;
-    const hostName = host.firstName + " " + host.lastName;
-    const hostPendingVerificationMailOptions = {
-      from: "atstaytravel@gmail.com",
-      to: hostEmail,
-      subject: "Sent for verification",
-      html: `<p>Dear ${hostName},</p>
-         <p>Your property has been sent for verification to our team.</p>
-
-         <p><strong>Property Details:</strong></p>
-        <ul>
-          <li>Type: ${type}</li>
-          <li>Hotel Id: ${hotelId}</li>
-          <li>Host Id: ${hostId}</li>
-          <li>Property Name: ${title}</li>
-        </ul>
-        <p><strong>Prices:</strong></p>
-        ${amount}
-        <p>Best regards,<br/>Team AtStay</p>
-        `,
-    };
-
-    await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(hostPendingVerificationMailOptions);
-
-    res.status(200).json(newListing);
+    res.status(201).json(newListing);
   } catch (err) {
-    res
-      .status(409)
-      .json({ message: "Fail to create Listing", error: err.message });
-    console.log(err);
+    console.error("❌ Error Creating Listing:", err);
+    res.status(500).json({ message: "Fail to create listing", error: err.message });
   }
 });
 
-// get all listings
+/* ✅ GET ALL VERIFIED LISTINGS */
 router.get("/getALL", async (req, res) => {
   try {
-    const resp = await Listing.find({ verification: true });
-    res.status(200).json(resp);
+    const listings = await Listing.find({ verification: true });
+    console.log("✅ Listings Retrieved:", listings.length);
+    res.status(200).json(listings);
   } catch (err) {
-    res
-      .status(404)
-      .json({ message: "Fail to fetch listings", error: err.message });
-    console.log(err);
+    console.error("❌ Error Fetching Listings:", err);
+    res.status(500).json({ message: "Fail to fetch listings", error: err.message });
   }
 });
 
-/* GET lISTINGS BY CATEGORY */
+/* ✅ GET LISTINGS BY CATEGORY */
 router.get("/", async (req, res) => {
   const qCategory = req.query.category;
-
   try {
     let listings;
     if (qCategory) {
-      listings = await Listing.find({
-        category: qCategory,
-        verification: true,
-      });
+      listings = await Listing.find({ category: qCategory, verification: true });
     } else {
       listings = await Listing.find({ verification: true });
     }
-
     res.status(200).json(listings);
   } catch (err) {
-    res
-      .status(404)
-      .json({ message: "Fail to fetch listings", error: err.message });
-    console.log(err);
+    console.error("❌ Error Fetching Listings:", err);
+    res.status(500).json({ message: "Fail to fetch listings", error: err.message });
   }
 });
 
-/* GET LISTINGS BY SEARCH */
-router.get("/search/:search", async (req, res) => {
-  const { search } = req.params;
-
-  try {
-    let listings = [];
-    console.log("search property route hit");
-
-    if (search === "all") {
-      listings = await Listing.find({ verification: true });
-    } else {
-      listings = await Listing.find({
-        $and: [
-          {
-            $or: [
-              { category: { $regex: search, $options: "i" } },
-              { title: { $regex: search, $options: "i" } },
-              { city: { $regex: search, $options: "i" } },
-              { type: { $regex: search, $options: "i" } },
-            ],
-          },
-          {
-            verification: true,
-          },
-        ],
-      });
-    }
-
-    res.status(200).json(listings);
-  } catch (err) {
-    res
-      .status(404)
-      .json({ message: "Fail to fetch listings", error: err.message });
-    console.log(err);
-  }
-});
-
-/* LISTING DETAILS */
+/* ✅ GET LISTING DETAILS BY ID */
 router.get("/:listingId", async (req, res) => {
   try {
     const { listingId } = req.params;
-    // console.log(listingId);
-    const listing = await Listing.find({ hotelId: listingId });
-    // console.log(listing);
-    res.status(202).json(listing);
+    if (!listingId) return res.status(400).json({ message: "Listing ID is required" });
+
+    const listing = await Listing.findOne({ hotelId: listingId });
+
+    if (!listing) return res.status(404).json({ message: "Listing not found" });
+
+    console.log("✅ Retrieved Listing:", listing);
+    res.status(200).json(listing);
   } catch (err) {
-    res
-      .status(404)
-      .json({ message: "Listing can not found!", error: err.message });
+    console.error("❌ Error Fetching Listing:", err);
+    res.status(500).json({ message: "Fail to fetch listing", error: err.message });
   }
 });
 
-router.post("/createListing", async (req, res) => {
-  try {
-    console.log(req.body);
-    const {
-      hostId,
-      category,
-      type,
-      streetAddress,
-      aptSuite,
-      city,
-      province,
-      country,
-      guestCount,
-      bedroomCount,
-      bedCount,
-      bathroomCount,
-      amenities,
-      listingPhotoPaths,
-      title,
-      description,
-      highlight,
-      highlightDesc,
-      price,
-      rooms,
-    } = req.body;
-
-    const hotelId = uniqid();
-    const listing = new Listing({
-      hostId,
-      category,
-      type,
-      streetAddress,
-      aptSuite,
-      city,
-      province,
-      country,
-      guestCount,
-      bedroomCount,
-      bedCount,
-      bathroomCount,
-      amenities,
-      listingPhotoPaths,
-      title,
-      description,
-      highlight,
-      highlightDesc,
-      price,
-      rooms,
-      hotelId,
-    });
-    await listing.save();
-    res.status(201).json(listing);
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ message: error.message });
-  }
-});
-
+/* ✅ UPDATE LISTING */
 router.patch("/updateListing", async (req, res) => {
   try {
-    console.log("data form frontend: ", req.body);
-    const {
-      hostId,
-      hotelId,
-      title,
-      category,
-      type,
-      streetAddress,
-      city,
-      province,
-      country,
-      amenities,
-      description,
-      highlight,
-      highlightDesc,
-      pincode,
-      price,
-      standardRoom,
-      doubleRoom,
-      deluxeRoom,
-    } = req.body;
-    const resp = await Listing.findOneAndUpdate(
+    const { hostId, hotelId, ...updateFields } = req.body;
+
+    if (!hostId || !hotelId)
+      return res.status(400).json({ message: "Both hostId and hotelId are required" });
+
+    const updatedListing = await Listing.findOneAndUpdate(
       { hostId, hotelId },
-      {
-        title,
-        category,
-        type,
-        streetAddress,
-        city,
-        province,
-        country,
-        amenities,
-        description,
-        highlight,
-        highlightDesc,
-        pincode,
-        price,
-        rooms: [
-          { roomType: "standard", price: standardRoom },
-          { roomType: "double", price: doubleRoom },
-          { roomType: "deluxe", price: deluxeRoom },
-        ],
-      },
+      { $set: updateFields },
       { new: true }
     );
-    console.log("updated value: ", resp);
-    res.json(resp);
+
+    if (!updatedListing) return res.status(404).json({ message: "Listing not found" });
+
+    console.log("✅ Listing Updated:", updatedListing);
+    res.status(200).json(updatedListing);
   } catch (error) {
-    console.log(error);
+    console.error("❌ Error Updating Listing:", error);
+    res.status(500).json({ message: "Fail to update listing", error: error.message });
   }
 });
 
-router.get("/getListingsHost/:hostId", async (req, res) => {
-  try {
-    const { hostId } = req.params;
-    const resp = await Listing.find({ hostId });
-    res.json(resp);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
+/* ✅ DELETE LISTING */
 router.delete("/:hotelid", async (req, res) => {
-  const hotelid = req.params.hotelid;
   try {
-    const data = await Listing.findOneAndDelete({ hotelId: hotelid });
-    res.json({ msg: "Your Property is deleted successfully" });
+    const { hotelid } = req.params;
+    if (!hotelid) return res.status(400).json({ message: "Hotel ID is required" });
+
+    const deletedListing = await Listing.findOneAndDelete({ hotelId: hotelid });
+
+    if (!deletedListing) return res.status(404).json({ message: "Listing not found" });
+
+    console.log("✅ Listing Deleted:", deletedListing);
+    res.status(200).json({ message: "Property deleted successfully" });
   } catch (error) {
-    console.log(error);
+    console.error("❌ Error Deleting Listing:", error);
+    res.status(500).json({ message: "Fail to delete listing", error: error.message });
   }
 });
+
 module.exports = router;

@@ -116,5 +116,6 @@ const ListingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Listing = mongoose.model("Listing", ListingSchema);
+const Listing = mongoose.model("Listing", ListingSchema, "listings"); // Explicit collection name
 module.exports = Listing;
+

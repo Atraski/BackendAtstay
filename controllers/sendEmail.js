@@ -7,16 +7,12 @@ const Listing = require("../models/Listing");
 // Nodemailer Configuration
 const transporter = nodemailer.createTransport({
   service: "gmail",
-  port: 465,
-  secure: true,
   auth: {
-    user: "atstaytravel@gmail.com",
-    pass: "emqr amor owjl fpax",
-  },
-  tls: {
-    rejectUnauthorized: false,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
+
 
 exports.sendEmail = async (req, res, next) => {
   try {

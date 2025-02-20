@@ -6,7 +6,6 @@ var uniqid = require("uniqid");
 const nodemailer = require("nodemailer");
 const User = require("../models/User");
 const Host = require("../models/Host");
-
 const clientUrl = "http://localhost:3000";
 
 /* Configuration Multer for File Upload */
